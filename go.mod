@@ -1,6 +1,6 @@
 module gommdb
 
-go 1.23.5
+go 1.23
 
 require (
 	github.com/maxmind/mmdbwriter v1.0.0
