@@ -41,5 +41,5 @@ jobs:
           username: ${{ secrets.SSH_USER }}       # 服务器用户名
           key: ${{ secrets.SSH_PRIVATE_KEY }}     # 之前添加的私钥
           port: 22                               # ssh端口，默认22
-          source: "myapp"                        # 上传的文件
+          source: "parseIP"                        # 上传的文件
           target: "/data/myapp"             # 远程目录
