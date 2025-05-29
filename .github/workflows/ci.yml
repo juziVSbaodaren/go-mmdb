@@ -34,7 +34,7 @@ jobs:
         run: go test -v ./...
 
       - name: Build binary
-        run: go build -v -o parseIP ./...
+        run: GOOS=linux GOARCH=amd64 go build -v -o parseIP ./main.go
 
       # 可选，上传构建产物作为 workflow artifact
       - name: Upload build artifact
