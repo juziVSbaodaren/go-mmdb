@@ -1,0 +1,27 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Vendor directory
+vendor/
+
+# Editor config files
+*.swp
+*.idea/
+*.vscode/
+
+# Logs
+*.log
+
+# Dependency directories
+/pkg/mod/
+
+# Output of go test
+*.test
+
+# Coverage files
+coverage.out

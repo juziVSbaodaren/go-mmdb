@@ -1,0 +1,45 @@
+name: Go Build and Deploy
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build binary
+        run: go build -v -o myapp ./...
+
+      - name: Deploy to server via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}           # 服务器 IP
+          username: ${{ secrets.SSH_USER }}       # 服务器用户名
+          key: ${{ secrets.SSH_PRIVATE_KEY }}     # 之前添加的私钥
+          port: 22                               # ssh端口，默认22
+          source: "myapp"                        # 上传的文件
+          target: "/data/myapp"             # 远程目录
