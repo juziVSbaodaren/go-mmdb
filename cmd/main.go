@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"gommdb/geoip"
+
+	"github.com/juziVSbaodaren/gommdb/geoip"
 )
 
 // GenerateCustomMMDB generates a custom MMDB file

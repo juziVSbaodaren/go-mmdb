@@ -1,4 +1,4 @@
-module gommdb
+module github.com/juziVSbaodaren/gommdb
 
 go 1.23
 

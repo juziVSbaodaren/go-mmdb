@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gommdb/geoip"
+
+	"github.com/juziVSbaodaren/gommdb/geoip"
 )
 
 func main() {
@@ -11,6 +12,9 @@ func main() {
 	customMmdbPath := flag.String("customMmdbPath", "./etc/CustomGeoLite.mmdb", "自定义数据库路径")
 	Ip := flag.String("ip", "", "ip地址")
 	flag.Parse()
+	if *Ip == "" {
+		panic("ip不能为空")
+	}
 	geoip.InitGeoIP(*mmdbPath, *customMmdbPath)
 	loc, err := geoip.GetLocation(*Ip) //103.191.243.121,183.2.172.177,202.201.48.42
 	if err != nil {
