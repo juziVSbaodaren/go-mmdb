@@ -32,7 +32,9 @@ jobs:
         run: go test -v ./...
 
       - name: Build binary
-        run: GOOS=linux GOARCH=amd64 go build -v -o parseIP ./main.go
+        run: |
+            mkdir -p dist                   # ✅ 创建 dist 文件夹
+            GOOS=linux GOARCH=amd64 go build -v -o parseIP ./main.go
 
       - name: Deploy to server via SCP
         uses: appleboy/scp-action@v0.1.4
