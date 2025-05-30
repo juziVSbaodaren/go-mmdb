@@ -3,9 +3,11 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'  # 如 v1.0.0 时触发
+      - 'v*'  # 仅当推送以 v 开头的 tag（如 v1.0.0）时触发
+
 permissions:
-  contents: write  # 👈 这是关键
+  contents: write  # 关键：允许创建发布版本
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -17,38 +19,46 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'  # 根据你实际使用的 Go 版本
+          go-version: '1.23'  # 请根据你的 Go 版本修改
 
-      - name: Extract version
+      - name: Extract version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Build binaries
+      - name: Build and Package Binaries
         run: |
           VERSION=${{ steps.get_version.outputs.VERSION }}
-          mkdir -p dist/etc
-          cp -r ./etc/* dist/etc/
+          echo "Building version: $VERSION"
 
-          # 构建并打包 Linux 版本
-          GOOS=linux GOARCH=amd64 go build -o parseIP ./main.go
-          mkdir -p pkg/linux
-          mv parseIP pkg/linux/
-          cp -r ./etc pkg/linux/
+          # 清理构建目录
+          rm -rf dist pkg
+          mkdir -p dist
+
+          ####################
+          # Linux (amd64)
+          ####################
+          mkdir -p pkg/linux/etc
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o pkg/linux/parseIP ./main.go
+          cp -r etc/* pkg/linux/etc/
           tar -czf dist/parseIP-linux-${VERSION}.tar.gz -C pkg/linux .
 
-          # 构建并打包 macOS 版本
-          GOOS=darwin GOARCH=amd64 go build -o parseIP ./main.go
-          mkdir -p pkg/macos
-          mv parseIP pkg/macos/
-          cp -r ./etc pkg/macos/
+          ####################
+          # macOS (amd64)
+          ####################
+          mkdir -p pkg/macos/etc
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o pkg/macos/parseIP ./main.go
+          cp -r etc/* pkg/macos/etc/
           tar -czf dist/parseIP-macos-${VERSION}.tar.gz -C pkg/macos .
 
-          # 构建并打包 Windows 版本
-          GOOS=windows GOARCH=amd64 go build -o parseIP.exe ./main.go
-          mkdir -p pkg/windows
-          mv parseIP.exe pkg/windows/
-          cp -r ./etc pkg/windows/
-          zip -r dist/parseIP-windows-${VERSION}.zip pkg/windows
+          ####################
+          # Windows (amd64)
+          ####################
+          mkdir -p pkg/windows/etc
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o pkg/windows/parseIP.exe ./main.go
+          cp -r etc/* pkg/windows/etc/
+          cd pkg/windows
+          zip -r ../../dist/parseIP-windows-${VERSION}.zip *
+          cd -
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
