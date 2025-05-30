@@ -33,22 +33,30 @@ jobs:
 
       - name: Build binary
         run: |
-            mkdir -p dist                   # ✅ 创建 dist 文件夹
-            GOOS=linux GOARCH=amd64 go build -v -o dist/parseIP ./main.go
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 go build -v -o dist/parseIP ./main.go
+      
+      - name: Prepare config file
+        run: |
+          mkdir -p dist/etc
+          cp -r ./etc/* dist/etc/
+      
       - name: Create target directory on server
         uses: appleboy/ssh-action@v1.0.0
         with:
-              host: ${{ secrets.SSH_HOST }}
-              username: ${{ secrets.SSH_USERNAME }}
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: 22
-              script: mkdir -p /home/deploy/myapp
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: mkdir -p /home/deploy/myapp
+      
       - name: Deploy to server via SCP
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.SSH_HOST }}           # 服务器 IP
-          username: ${{ secrets.SSH_USERNAME }}       # 服务器用户名
-          key: ${{ secrets.SSH_PRIVATE_KEY }}     # 之前添加的私钥
-          port: 22                               # ssh端口，默认22
-          source: "dist/parseIP"                        # 上传的文件
-          target: "/home/deploy/myapp"             # 远程目录
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "dist/**"                   # ✅ 递归上传所有子目录和文件
+          target: "/home/deploy/myapp"        # ✅ 上传到目标目录
+          strip_components: 1                 # ✅ 去掉 dist 层，只保留其下结构
