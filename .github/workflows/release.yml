@@ -3,8 +3,9 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'  # 仅在推送 v1.0.0 这类 tag 时触发
-
+      - 'v*'  # 如 v1.0.0 时触发
+permissions:
+  contents: write  # 👈 这是关键
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -16,16 +17,38 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'  # 你实际使用的 Go 版本
+          go-version: '1.20'  # 根据你实际使用的 Go 版本
 
-      - name: Build binaries for multiple platforms
+      - name: Extract version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build binaries
         run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
           mkdir -p dist/etc
           cp -r ./etc/* dist/etc/
 
-          GOOS=linux GOARCH=amd64 go build -o dist/parseIP-linux ./main.go
-          GOOS=darwin GOARCH=amd64 go build -o dist/parseIP-macos ./main.go
-          GOOS=windows GOARCH=amd64 go build -o dist/parseIP.exe ./main.go
+          # 构建并打包 Linux 版本
+          GOOS=linux GOARCH=amd64 go build -o parseIP ./main.go
+          mkdir -p pkg/linux
+          mv parseIP pkg/linux/
+          cp -r ./etc pkg/linux/
+          tar -czf dist/parseIP-linux-${VERSION}.tar.gz -C pkg/linux .
+
+          # 构建并打包 macOS 版本
+          GOOS=darwin GOARCH=amd64 go build -o parseIP ./main.go
+          mkdir -p pkg/macos
+          mv parseIP pkg/macos/
+          cp -r ./etc pkg/macos/
+          tar -czf dist/parseIP-macos-${VERSION}.tar.gz -C pkg/macos .
+
+          # 构建并打包 Windows 版本
+          GOOS=windows GOARCH=amd64 go build -o parseIP.exe ./main.go
+          mkdir -p pkg/windows
+          mv parseIP.exe pkg/windows/
+          cp -r ./etc pkg/windows/
+          zip -r dist/parseIP-windows-${VERSION}.zip pkg/windows
 
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
@@ -35,9 +58,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/parseIP-linux
-            dist/parseIP-macos
-            dist/parseIP.exe
-            dist/etc/*
+            dist/*.tar.gz
+            dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
